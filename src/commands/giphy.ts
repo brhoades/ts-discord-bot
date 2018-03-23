@@ -11,7 +11,7 @@ interface GiphyHTTPResponse {
 }
 
 async function giphy(message: Message) {
-  const parts = message.content.split(/\s+/).splice(1);
+  const parts = message.content.split(/\s+/).slice(1);
   const query = parts.join('+');
   const url = `https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${query}`;
 
