@@ -6,6 +6,7 @@
   "author": "billyarhoades@gmail.com",
   "license": "AGPL3+",
   "scripts": {
+    "build": "tsc -p .",
     "build:live": "tsc -p . -w",
     "dev": "nodemon dist/index.js"
   },
