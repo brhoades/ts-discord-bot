@@ -31,9 +31,7 @@ export const register = (client: Client) => {
       }
 
       if (url.match(/youtube\.com/)) {
-        manager.play(message.member.voiceChannel, (conn: VoiceConnection) => (
-          conn.playStream(ytdl(url, { filter: 'audioonly' }))
-        ));
+        manager.enqueueStream(message.member.voiceChannel, ytdl(url, { filter: 'audioonly' }));
       } else {
         manager.enqueueArbitraryInput(message.member.voiceChannel, url);
       }
@@ -54,18 +52,20 @@ export const register = (client: Client) => {
       let channel: VoiceChannel;
       const userName = newMember.nickname ? newMember.nickname : newMember.displayName;
 
+      const filterBots = (m: GuildMember) => !m.user.bot;
+
       // there seems to be a bug with discordjs@11.3.2 where short clips won't play. I added 'has' here.
-      if (newMember.voiceChannel) {
+      if (newMember.voiceChannel && newMember.voiceChannel.members.some(filterBots)) {
         message = getURLForMessage(`${userName} has joined`);
         channel = newMember.voiceChannel;
-      } else {
+      }
+
+      if (oldMember.voiceChannel && oldMember.voiceChannel.members.some(filterBots)) {
         message = getURLForMessage(`${userName} has left`);
         channel = oldMember.voiceChannel;
       }
 
-      message.then((url) => {
-        manager.enqueueArbitraryInput(channel, url);
-      });
+      message.then(url => manager.enqueueArbitraryInput(channel, url));
     }
   });
 };
