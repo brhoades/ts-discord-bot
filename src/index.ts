@@ -27,6 +27,7 @@ process.on('SIGINT', () => {
   console.log('Quitting...');
 
   client.destroy();
+  process.exit(0);
 });
 
 // nodemon restart signal
@@ -34,6 +35,7 @@ process.once('SIGUSR2', () => {
   console.log('Reloading...');
 
   client.destroy();
+  process.exit(0);
 });
 
 client.login(config.token);

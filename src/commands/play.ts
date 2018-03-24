@@ -65,7 +65,7 @@ export const register = (client: Client) => {
         channel = oldMember.voiceChannel;
       }
 
-      message.then(url => manager.enqueueArbitraryInput(channel, url));
+      message.then(url => manager.enqueueArbitraryInput(channel, url, 3));
     }
   });
 };
