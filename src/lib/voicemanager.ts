@@ -1,4 +1,4 @@
-import { Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
+import { GuildChannel, Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
 import { Readable } from 'stream';
 
 class QueuedItem {
@@ -16,14 +16,28 @@ export default class VoiceManager {
     this.queue = new Map<string, QueuedItem[]>();
   }
 
-  public play(channel: VoiceChannel, func: TakesConnection) {
+  public play(staleChannel: VoiceChannel, func: TakesConnection) {
+    // The channel's id is likely stale. Look it up manually.
+    const channels = this.client.guilds.get(staleChannel.guild.id).channels.filter((c: GuildChannel) => (
+      c.name === staleChannel.name && c.type === 'voice'),
+    );
+
+    if (channels.array().length === 0) {
+      console.error('No match found');
+      return;
+    }
+
+    const channel: VoiceChannel = channels.array()[0] as VoiceChannel;
+
     if (channel.connection) {
       this.handleDispatchers(func(channel.connection));
-    } else {
-      channel.join().then((conn) => {
-        this.handleDispatchers(func(conn));
-      });
+      return;
     }
+
+    channel
+      .join()
+      .then((conn) => this.handleDispatchers(func(conn)))
+      .catch((err: Error) => console.error(`Error when joining: ${err.message}\n${err.stack}`));
   }
 
   public stopPlaying(guild: Guild): boolean {
@@ -56,8 +70,6 @@ export default class VoiceManager {
       this.queue.set(channel.guild.id, []);
     }
 
-    console.log(this.queue.get(channel.guild.id).length);
-    console.log(limit);
     if (limit > 0 && this.queue.get(channel.guild.id).length > limit) {
       console.debug('Tossed arbitrary input from queue as limit was reached.');
       return;

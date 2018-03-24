@@ -65,7 +65,16 @@ export const register = (client: Client) => {
         channel = oldMember.voiceChannel;
       }
 
-      message.then(url => manager.enqueueArbitraryInput(channel, url, 3));
+      if (!message || !channel) {
+        return;
+      }
+
+      message
+        .then(url => manager.enqueueArbitraryInput(channel, url, 3))
+        .catch((error: Error) => {
+          console.error(`Error when getting TTS message: ${error.message}`);
+          console.log(error.stack);
+        });
     }
   });
 };

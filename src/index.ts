@@ -23,6 +23,19 @@ client.on('ready', () => {
   console.log('Ready');
 });
 
+client.on('error', (error) => {
+  console.error(`Client error: ${error.message}`);
+  console.error(error.stack);
+});
+
+client.on('warn', (warn) => {
+  console.error(`Client warning: ${warn}`);
+});
+
+client.on('debug', (debug) => {
+  console.error(`Client debuging: ${debug}`);
+});
+
 process.on('SIGINT', () => {
   console.log('Quitting...');
 
