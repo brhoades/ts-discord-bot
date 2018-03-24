@@ -48,7 +48,9 @@ process.once('SIGUSR2', () => {
   console.log('Reloading...');
 
   client.destroy();
-  process.exit(0);
+  console.log(typeof process.pid);
+  console.log(process.pid);
+  process.kill(process.pid, 'SIGUSR2');
 });
 
 client.login(config.token);
