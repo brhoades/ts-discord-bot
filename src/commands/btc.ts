@@ -8,7 +8,7 @@ interface CryptoCoin {
   id: string;
   name: string;
   rank: string;
-  "24h_volume_usd": string;
+  '24h_volume_usd': string;
   symbol: string;
   price_usd: string;
   price_btc: string;
@@ -122,7 +122,7 @@ const COINS = [
   'icn',
 ];
 
-const GRAPHS: Map<string,string> = new Map<string,string>([
+const GRAPHS: Map<string, string> = new Map<string, string>([
   ['bitcoin', 'https://s2.coinmarketcap.com/generated/sparklines/web/7d/usd/1.png'],
   ['ethereum', 'https://s2.coinmarketcap.com/generated/sparklines/web/7d/usd/1027.png'],
   ['ripple', 'https://s2.coinmarketcap.com/generated/sparklines/web/7d/usd/52.png'],
@@ -225,6 +225,8 @@ const GRAPHS: Map<string,string> = new Map<string,string>([
   ['iconomi', 'https://s2.coinmarketcap.com/generated/sparklines/web/7d/usd/1408.png'],
 ]);
 
+const COIN_COMMANDS = COINS.slice(0, 10);
+
 async function getCoins(): Promise<CryptoCoin[]> {
   const url = 'https://api.coinmarketcap.com/v1/ticker/';
   const response = await rest.get<BTCHTTPResponse>(url);
@@ -253,25 +255,26 @@ const renderCoin = (coin: CryptoCoin): RichEmbed => {
     title: `${coin.name} (${coin.symbol})`,
   });
 
-  msg.addField('Price', `$${coin.price_usd}`);
+  const priceUSD = parseFloat(coin.price_usd);
   const hourChange = parseFloat(coin.percent_change_1h) / 100;
   const dayChange = parseFloat(coin.percent_change_24h) / 100;
   const weekChange = parseFloat(coin.percent_change_7d) / 100;
-  const price_usd = parseFloat(coin.price_usd);
+
+  msg.addField('Price', `$${coin.priceUSD}`);
 
   msg.addField(
     'Δ Hour',
-    `$${(hourChange * price_usd).toFixed(2)} (${(hourChange * 100).toFixed(2)}%)`,
+    `$${(hourChange * priceUSD).toFixed(2)} (${(hourChange * 100).toFixed(2)}%)`,
     true,
   );
   msg.addField(
     'Δ Day',
-    `$${(dayChange * price_usd).toFixed(2)} (${(dayChange * 100).toFixed(2)}%)`,
+    `$${(dayChange * priceUSD).toFixed(2)} (${(dayChange * 100).toFixed(2)}%)`,
     true,
   );
   msg.addField(
     'Δ Week',
-    `$${(weekChange * price_usd).toFixed(2)} (${(weekChange * 100).toFixed(2)}%)`,
+    `$${(weekChange * priceUSD).toFixed(2)} (${(weekChange * 100).toFixed(2)}%)`,
     true,
   );
 
@@ -288,7 +291,10 @@ const renderCoin = (coin: CryptoCoin): RichEmbed => {
 };
 
 export const name = 'BTC';
-export const help = 'None!';
+export const help = {
+  commands: COIN_COMMANDS.concat(['cc, crypto']),
+  message: '',
+};
 export const register = (client: Client) => {
   client.on(
     'message', (message: Message) => {
@@ -303,7 +309,7 @@ export const register = (client: Client) => {
             getCoin(parts[1]).then((coin) => message.channel.send({ embed: renderCoin(coin) }));
           }
         });
-      } else if (message.content.match(new RegExp(`^!(${COINS.slice(0, 10).join('|')})$`))) {
+      } else if (message.content.match(new RegExp(`^!(${COIN_COMMANDS.join('|')})$`))) {
         const parts = message.content.split(/\s+/);
         const details = getCoin(parts[0].slice(1)).then((coin) => {
           message.channel.send({ embed: renderCoin(coin) });
