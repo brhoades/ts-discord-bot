@@ -33,7 +33,7 @@ client.on('warn', (warn) => {
 });
 
 client.on('debug', (debug) => {
-  console.error(`Client debuging: ${debug}`);
+  console.debug(`Client debuging: ${debug}`);
 });
 
 process.on('SIGINT', () => {
@@ -48,8 +48,6 @@ process.once('SIGUSR2', () => {
   console.log('Reloading...');
 
   client.destroy();
-  console.log(typeof process.pid);
-  console.log(process.pid);
   process.kill(process.pid, 'SIGUSR2');
 });
 
