@@ -1,8 +1,10 @@
-import { Client, Message, RichEmbed } from 'discord.js';
+import { Message, RichEmbed } from 'discord.js';
 import { table } from 'table';
 import { RestClient } from 'typed-rest-client/RestClient';
-
 const rest = new RestClient('discord-bot');
+
+import Client from '../lib/client';
+import { Help } from '../types/command';
 
 interface CryptoCoin {
   id: string;
@@ -291,29 +293,42 @@ const renderCoin = (coin: CryptoCoin): RichEmbed => {
 };
 
 export const name = 'BTC';
-export const help = {
-  commands: COIN_COMMANDS.concat(['cc, crypto']),
-  message: '',
+export const help: Help = {
+  commands: [
+    {
+      description: 'Retrieve information about a specific coin',
+      invocation: `!${COIN_COMMANDS.join('/!')}`,
+      invocationTest: new RegExp(`^!(${COIN_COMMANDS.join('|')})$`),
+      shortDescription: 'retrieve information about a specific cryptocoin.',
+    },
+    {
+      description: ('Retrieve information about the top 10 crypto coins. Alternatively, specify a specific'
+                  + ` coin name to retrieve information about that coin.\n Supported coins: ${COINS.join(', ')}.`),
+      invocation: '!cc/!crypto: [coin]',
+      invocationTest: new RegExp(`^!(cc|crypto)`),
+      shortDescription: 'retrieve information about top cryptocoins or about a specific one.',
+    },
+  ],
 };
 export const register = (client: Client) => {
-  client.on(
-    'message', (message: Message) => {
-      if (message.content.match(/^!(crypto|cc)/)) {
-        getCoins().then((coins) => {
-          const parts = message.content.split(/\s+/);
+  client.onMessage((message) => {
+    if (!message.command) {
+      return;
+    }
 
-          if (parts.length === 1) {
-            const data = coins.slice(0, 10).map(c => [c.name, c.price_usd, c.percent_change_1h]);
-            message.channel.send(`\`\`\`\n${table(data)}\n\`\`\``);
-          } else if (parts.length > 1) {
-            getCoin(parts[1]).then((coin) => message.channel.send({ embed: renderCoin(coin) }));
-          }
-        });
-      } else if (message.content.match(new RegExp(`^!(${COIN_COMMANDS.join('|')})$`))) {
-        const parts = message.content.split(/\s+/);
-        const details = getCoin(parts[0].slice(1)).then((coin) => {
-          message.channel.send({ embed: renderCoin(coin) });
-        }).catch((err) => message.reply(err.message));
-      }
+    if (['crypto', 'cc'].some(v => v === message.command)) {
+      getCoins().then((coins) => {
+        if (message.args.length === 0) {
+          const data = coins.slice(0, 10).map(c => [c.name, c.price_usd, c.percent_change_1h]);
+          message.channel.send(`\`\`\`\n${table(data)}\n\`\`\``);
+        } else if (message.args.length > 0) {
+          getCoin(message.args[0]).then((coin) => message.channel.send({ embed: renderCoin(coin) }));
+        }
+      });
+    } else if (COIN_COMMANDS.some(c => c === message.command)) {
+      const details = getCoin(message.command).then((coin) => {
+        message.channel.send({ embed: renderCoin(coin) });
+      }).catch((err) => message.reply(err.message));
+    }
   });
 };

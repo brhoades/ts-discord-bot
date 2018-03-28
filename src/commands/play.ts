@@ -1,4 +1,4 @@
-import { Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
+import { Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
 import { Readable } from 'stream';
 const ytdl = require('ytdl-core');
 const googleTTS = require('google-tts-api');
@@ -7,10 +7,28 @@ import { createWriteStream, exists as pathExists, mkdirSync, write as fileWrite 
 import { get as httpsGet } from 'https';
 import { join as pathJoin } from 'path';
 
+import Client from '../lib/client';
 import VoiceManager from '../lib/voicemanager';
+import { Help } from '../types/command';
 
-export const name = "Play Sound";
-export const help = "None!";
+export const name = 'Voice';
+export const help: Help = {
+  commands: [
+    {
+      description: ('Plays a YouTube video or an arbitrary URL which provides audio data into '
+                    + 'the channel the invoker is in.'),
+      invocation: `!play`,
+      invocationTest: new RegExp(`^!play\s+.+$`),
+      shortDescription: 'play a YouTube video or other audio into a voice channel.',
+    },
+    {
+      description: 'Stops whater the bot is currently playing in your channel.',
+      invocation: `!stop`,
+      invocationTest: new RegExp(`^!stop$`),
+      shortDescription: 'makes the bot stop playing something in your channel.',
+    },
+  ],
+};
 
 const getURLForMessage = (message: string, language: string = 'en', volume: number): Promise<string> => {
   return googleTTS(message, language, 1);
@@ -71,10 +89,13 @@ export const register = (client: Client) => {
   // set up queue proceessing
   setInterval(() => { manager.processQueue(); }, 500);
 
-  client.on('message', (message: Message) => {
-    if (message.content.match(/^!play\s+.+/)) {
-      const parts = message.content.split(/\s+/).slice(1);
-      const url = parts[0];
+  client.onMessage((message) => {
+    if (!message.command) {
+      return;
+    }
+
+    if (message.command === 'play' && message.args.length > 0) {
+      const url = message.args[0];
 
       if (!message.member.voiceChannel) {
         message.reply('You must be in a voice channel in order to use this command.');
@@ -88,7 +109,7 @@ export const register = (client: Client) => {
       }
     }
 
-    if (message.content.match(/^!stop/)) {
+    if (message.command === 'stop') {
       if (manager.stopPlaying(message.guild)) {
         message.reply('Stopped');
       } else {

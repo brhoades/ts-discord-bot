@@ -1,8 +1,8 @@
-import { Client } from 'discord.js';
 import { dirname, join } from 'path';
 import { readdirSync, readFileSync } from 'fs';
 import * as process from 'process';
 
+import Client from './lib/client';
 import { Command } from './types/command';
 
 const client = new Client();
@@ -11,10 +11,10 @@ const config = JSON.parse(readFileSync('./config.json', 'utf-8'));
 const loadModules = (path: string) => {
   readdirSync(path).map((file: string) => {
     const command: Command = require(join(path, file));
-
-    console.log(`Loading command ${command.name}`);
-    command.register(client);
+    client.addCommand(command);
   });
+
+  client.registerCommands();
 };
 
 loadModules(join(dirname(__filename), 'commands'));

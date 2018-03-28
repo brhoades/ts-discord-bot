@@ -12,7 +12,8 @@
     "no-var-requires": [false],
     "no-console": [false],
     "arrow-parens": [false],
-    "quotemark": [true, "single", "avoid-escape"]
+    "quotemark": [true, "single", "avoid-escape"],
+    "interface-name": [false]
   },
   "jsRules": {
     "max-line-length": {
