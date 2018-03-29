@@ -1,7 +1,7 @@
 import { Client as DiscordClient, Message as DiscordMessage } from 'discord.js';
 
 import { Command } from '../types/command';
-import Message from './message';
+import ParsedMessage from './parsedmessage';
 
 export default class Client extends DiscordClient {
   public commands: Command[] = [];
@@ -18,11 +18,9 @@ export default class Client extends DiscordClient {
   }
 
   // Wraps on message to provide some useful command processing.
-  public onMessage(func: (message: Message) => any): this {
-    this.on('message', (message: Message) => {
-      const newMessage = <Message>message;
-      newMessage.process();
-      func(newMessage);
+  public onMessage(func: (message: ParsedMessage) => any): this {
+    this.on('message', (message: DiscordMessage) => {
+      func(new ParsedMessage(message));
     });
 
     return this;

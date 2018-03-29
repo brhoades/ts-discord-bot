@@ -25,12 +25,12 @@ export const register = (client: Client) => {
         const match = commands.find((c: HelpCommand) => commandRegex.test(c.invocation));
 
         if (match) {
-          message.channel.send(`${match.invocation}\n${match.description}`);
+          message.channel.send(`Help for: ${match.invocation}\n${match.description}`);
         } else {
           message.channel.send(`Unknown command ${message.args[0]}.`);
         }
       } else {
-        message.channel.send(commands.map(c => `${c.invocation}: ${c.shortDescription}`).join('\n'));
+        message.channel.send(commands.map(c => ` ${c.invocation}: ${c.shortDescription}`).join('\n'));
       }
     }
   });
