@@ -104,12 +104,14 @@ export const register = (client: Client) => {
       const filterBots = (m: GuildMember) => !m.user.bot;
 
       // there seems to be a bug with discordjs@11.3.2 where short clips won't play. I added 'has' here.
-      if (newMember.voiceChannel && newMember.voiceChannel.members.some(filterBots)) {
+      if (newMember.voiceChannel && newMember.voiceChannel.speakable
+          && newMember.voiceChannel.joinable && newMember.voiceChannel.members.some(filterBots)) {
         playTTSMessage(manager, `${userName} has joined`, newMember.voiceChannel);
       }
 
 
-      if (oldMember.voiceChannel && oldMember.voiceChannel.members.some(filterBots)) {
+      if (oldMember.voiceChannel && oldMember.voiceChannel.speakable
+          && oldMember.voiceChannel.joinable && oldMember.voiceChannel.members.some(filterBots)) {
         playTTSMessage(manager, `${userName} has left`, oldMember.voiceChannel);
       }
     }
