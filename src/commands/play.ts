@@ -2,16 +2,67 @@ import { Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, Vo
 import { Readable } from 'stream';
 const ytdl = require('ytdl-core');
 const googleTTS = require('google-tts-api');
-const http = require('http');
-const https = require('https');
+import { createHash } from 'crypto';
+import { createWriteStream, exists as pathExists, mkdirSync, write as fileWrite } from 'fs';
+import { get as httpsGet } from 'https';
+import { join as pathJoin } from 'path';
 
 import VoiceManager from '../lib/voicemanager';
 
 export const name = "Play Sound";
 export const help = "None!";
 
-const getURLForMessage = (message: string, language: string = 'en', volume: number = 1): Promise<string> => {
+const getURLForMessage = (message: string, language: string = 'en', volume: number): Promise<string> => {
   return googleTTS(message, language, 1);
+};
+
+const getTTSMessage = (message: string, language: string = 'en', volume: number = 1,
+                       basedir: string = '/tmp/cached_voices', cache: boolean = true): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    const hash = createHash('md5').update(`${message}${language}${volume}`).digest('hex');
+    const filename = pathJoin(basedir, hash);
+
+    pathExists(basedir, (basedirExists) => {
+      if (!basedirExists) {
+        mkdirSync(basedir);
+      }
+
+      pathExists(filename, (exists) => {
+        if (exists) {
+          return resolve(filename);
+        }
+
+        getURLForMessage(message, language, volume)
+          .then((url) => {
+            const stream = createWriteStream(filename);
+            stream.addListener('close', () => resolve(filename));
+            stream.addListener('error', (err) => reject(err));
+
+            const request = httpsGet(url, (response) => {
+              if (response.statusCode >= 400) {
+                return reject(new Error(
+                  `Error when fetching Google TTS transcription: ${response.statusCode} ${response.statusMessage}`,
+                ));
+              }
+
+              response.pipe(stream);
+            });
+          })
+          .catch(() => reject('An unknown error occurred when resolving the URL for a voice status change TTS.'));
+      });
+    });
+  });
+};
+
+const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceChannel) => {
+  getTTSMessage(message)
+    .then((file: string) => {
+      manager.enqueueFile(channel, file, 3);
+    })
+    .catch((err) => {
+      console.error(`Error when getting a TTS join/part message: ${err.message}`);
+      console.log(err.stack);
+    });
 };
 
 export const register = (client: Client) => {
@@ -48,33 +99,19 @@ export const register = (client: Client) => {
 
   client.on('voiceStateUpdate', (oldMember: GuildMember, newMember: GuildMember) => {
     if (oldMember.voiceChannel !== newMember.voiceChannel && !oldMember.user.bot && !newMember.user.bot) {
-      let message;
-      let channel: VoiceChannel;
       const userName = newMember.nickname ? newMember.nickname : newMember.displayName;
 
       const filterBots = (m: GuildMember) => !m.user.bot;
 
       // there seems to be a bug with discordjs@11.3.2 where short clips won't play. I added 'has' here.
       if (newMember.voiceChannel && newMember.voiceChannel.members.some(filterBots)) {
-        message = getURLForMessage(`${userName} has joined`);
-        channel = newMember.voiceChannel;
+        playTTSMessage(manager, `${userName} has joined`, newMember.voiceChannel);
       }
+
 
       if (oldMember.voiceChannel && oldMember.voiceChannel.members.some(filterBots)) {
-        message = getURLForMessage(`${userName} has left`);
-        channel = oldMember.voiceChannel;
+        playTTSMessage(manager, `${userName} has left`, oldMember.voiceChannel);
       }
-
-      if (!message || !channel) {
-        return;
-      }
-
-      message
-        .then(url => manager.enqueueArbitraryInput(channel, url, 3))
-        .catch((error: Error) => {
-          console.error(`Error when getting TTS message: ${error.message}`);
-          console.log(error.stack);
-        });
     }
   });
 };

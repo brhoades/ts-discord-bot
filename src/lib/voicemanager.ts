@@ -80,6 +80,21 @@ export default class VoiceManager {
     );
   }
 
+  public enqueueFile(channel: VoiceChannel, file: string, limit: number = -1) {
+    if (!this.queue.has(channel.guild.id)) {
+      this.queue.set(channel.guild.id, []);
+    }
+
+    if (limit > 0 && this.queue.get(channel.guild.id).length > limit) {
+      console.debug('Tossed arbitrary input from queue as limit was reached.');
+      return;
+    }
+
+    this.queue.get(channel.guild.id).push(
+      new QueuedItem(channel, (connection: VoiceConnection) => connection.playFile(file)),
+    );
+  }
+
   public processQueue() {
     this.queue.forEach((streams) => {
       if (!streams.length) {
