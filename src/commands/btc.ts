@@ -260,7 +260,7 @@ const renderCoin = (coin: CryptoCoin): RichEmbed => {
   const dayChange = parseFloat(coin.percent_change_24h) / 100;
   const weekChange = parseFloat(coin.percent_change_7d) / 100;
 
-  msg.addField('Price', `$${coin.priceUSD}`);
+  msg.addField('Price', `$${priceUSD}`);
 
   msg.addField(
     'Δ Hour',
