@@ -40,7 +40,9 @@ process.on('SIGINT', () => {
   console.log('Quitting...');
 
   client.destroy();
-  process.exit(0);
+  client.on('disconnect', () => {
+    process.exit(0);
+  });
 });
 
 // nodemon restart signal
