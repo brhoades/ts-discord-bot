@@ -1,6 +1,8 @@
 import { GuildChannel, Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
 import { Readable } from 'stream';
 
+import { unlink } from 'fs';
+
 import MapToArray from '../lib/maptoarray';
 
 class QueuedItem {
@@ -68,10 +70,31 @@ export default class VoiceManager {
     );
   }
 
-  public enqueueFile(channel: VoiceChannel, file: string, limit: number = -1) {
+  public enqueueFile(channel: VoiceChannel, file: string, limit: number = -1,
+                     removeFile: boolean = false) {
     this.queue.push(
       channel.guild.id,
-      new QueuedItem(channel, (connection: VoiceConnection) => connection.playFile(file)),
+      new QueuedItem(channel, (connection: VoiceConnection) => {
+        const dispatcher = connection.playFile(file);
+
+        // FIXME: this should be the caller's problem
+        if (removeFile) {
+          const unlinkCallback = () => (
+            unlink(file, (err) => {
+              if (err) {
+                console.error('Error cleaning up after file.');
+                console.error(err.message);
+                console.error(err.stack);
+              }
+            })
+          );
+
+          dispatcher.on('end', unlinkCallback);
+          dispatcher.on('error', unlinkCallback);
+        }
+
+        return dispatcher;
+      }),
       limit,
     );
   }

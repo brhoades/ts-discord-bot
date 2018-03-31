@@ -8,6 +8,7 @@ import { get as httpsGet } from 'https';
 import { join as pathJoin } from 'path';
 
 import Client from '../lib/client';
+import ParsedMessage from '../lib/parsedmessage';
 import VoiceManager from '../lib/voicemanager';
 import { Help } from '../types/command';
 
@@ -30,22 +31,39 @@ export const help: Help = {
   ],
 };
 
-const getTTSMessage = (message: string, language: string = 'en', volume: number = 1,
-                       basedir: string = '/tmp/cached_voices', cache: boolean = true): Promise<string> => {
-  return new Promise<string>((resolve, reject) => {
-    const hash = createHash('md5').update(`${message}${language}${volume}`).digest('hex');
-    const filename = pathJoin(basedir, hash);
+interface TTSOptions {
+  language: string;
+  volume: number;
+  cache: boolean;
+  basedir: string;
+}
 
-    pathExists(basedir, (basedirExists) => {
+const defaultOptions: TTSOptions = {
+  basedir: '/tmp/cached_voices',
+  cache: true,
+  language: 'en',
+  volume: 1,
+};
+
+const getTTSMessage = (message: string, rawOptions: Partial<TTSOptions>): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    const options: TTSOptions = { ...defaultOptions, ...rawOptions };
+    const hash = createHash('md5')
+      .update(`${message}${options.language}${options.volume}`)
+      .digest('hex');
+    const filename = pathJoin(options.basedir, hash);
+
+    pathExists(options.basedir, (basedirExists) => {
       if (!basedirExists) {
-        mkdirSync(basedir);
+        mkdirSync(options.basedir);
       }
 
       pathExists(filename, (exists) => {
         if (exists) {
           return resolve(filename);
         }
-        googleTTS(message, language, volume)
+
+        googleTTS(message, options.language, options.volume)
           .then((url: string) => {
             const stream = createWriteStream(filename);
             stream.addListener('close', () => resolve(filename));
@@ -67,8 +85,9 @@ const getTTSMessage = (message: string, language: string = 'en', volume: number 
   });
 };
 
-const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceChannel) => {
-  getTTSMessage(message)
+const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceChannel,
+                        options: Partial<TTSOptions> = {}) => {
+  getTTSMessage(message, options)
     .then((file: string) => {
       manager.enqueueFile(channel, file, 3);
     })
@@ -107,6 +126,35 @@ export const register = (client: Client) => {
     } else {
       message.reply('Not currently playing anything on this server.');
     }
+  });
+
+  // TODO: argument handling
+  client.onCommand('say', (message) => {
+    if (message.args.length === 0) {
+      return;
+    }
+
+    if (!message.member.voiceChannel) {
+      message.reply('You must be in a voice channel in order to use this command.');
+      return;
+    }
+
+    let language;
+    let ttsMessage = message.args.join(' ');
+    if (message.args[0] === '-lang') {
+      language = message.args[1];
+      ttsMessage = message.args.slice(2).join(' ');
+    }
+
+    if (ttsMessage.length > 100) {
+      message.reply('Provided message is too long.');
+      return;
+    }
+
+    playTTSMessage(manager, ttsMessage, message.member.voiceChannel, {
+      cache: false,
+      language,
+    });
   });
 
   client.on('voiceStateUpdate', (oldMember: GuildMember, newMember: GuildMember) => {
