@@ -297,14 +297,14 @@ export const help: Help = {
   commands: [
     {
       description: 'Retrieve information about a specific coin',
-      invocation: `!${COIN_COMMANDS.join('/!')}`,
+      invocation: `**!${COIN_COMMANDS.join('**/**!')}**`,
       invocationTest: new RegExp(`^!(${COIN_COMMANDS.join('|')})$`),
       shortDescription: 'retrieve information about a specific cryptocoin.',
     },
     {
       description: ('Retrieve information about the top 10 crypto coins. Alternatively, specify a specific'
                   + ` coin name to retrieve information about that coin.\n Supported coins: ${COINS.join(', ')}.`),
-      invocation: '!cc/!crypto: [coin]',
+      invocation: '**!cc**/**!crypto**: [coin]',
       invocationTest: new RegExp(`^!(cc|crypto)`),
       shortDescription: 'retrieve information about top cryptocoins or about a specific one.',
     },

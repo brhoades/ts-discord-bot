@@ -8,7 +8,7 @@ export const help: Help = {
   commands: [
     {
       description: 'Prints out help information about a specific command (if specified) or all commands.',
-      invocation: `!help [command]`,
+      invocation: `**!help** *(command)*`,
       invocationTest: new RegExp(`^!help`),
       shortDescription: 'lists all commands or shows help for a specific command',
     },

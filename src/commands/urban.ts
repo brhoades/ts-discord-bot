@@ -64,7 +64,7 @@ export const help: Help = {
   commands: [
     {
       description: 'Gets an urban dictionary defnition for a passed word or phrase.',
-      invocation: '!urban/!ud [query]',
+      invocation: '**!urban**/**!ud** [query]',
       invocationTest: new RegExp(`^!(urban|ud)\s+.+$`),
       shortDescription: 'get an urban dictionary definition for a word or phrase.',
     },

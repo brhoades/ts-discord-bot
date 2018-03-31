@@ -17,15 +17,23 @@ export const help: Help = {
   commands: [
     {
       description: ('Plays a YouTube video or an arbitrary URL which provides audio data into '
-                    + 'the channel the invoker is in.'),
-      invocation: `!play`,
+                    + 'the channel you are in.'),
+      invocation: '**!play** [url]',
       invocationTest: new RegExp(`^!play\s+.+$`),
       shortDescription: 'play a YouTube video or other audio into a voice channel.',
     },
     {
-      description: 'Stops whater the bot is currently playing in your channel.',
-      invocation: `!stop`,
+      description: 'Stops whatever the bot is currently playing in your channel.',
+      invocation: '**!stop**',
       invocationTest: new RegExp(`^!stop$`),
+      shortDescription: 'makes the bot stop playing something in your channel.',
+    },
+    {
+      description: ('Say something via TTS in the voice channel you are in. '
+                    + 'Optionally pass a language to speak in via -lang (eg,'
+                    + ' "!play -lang de Hello everyone!"'),
+      invocation: '**!say** *(-lang languageabbrevation)* [message]',
+      invocationTest: new RegExp(`^!say (-lang [A-Z]{2,4})? .+$`),
       shortDescription: 'makes the bot stop playing something in your channel.',
     },
   ],
