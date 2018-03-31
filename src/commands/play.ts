@@ -1,4 +1,4 @@
-import { Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
+import { Guild, GuildMember, Message, StreamDispatcher, VoiceChannel, VoiceConnection } from 'discord.js';
 import { Readable } from 'stream';
 const ytdl = require('ytdl-core');
 const googleTTS = require('google-tts-api');
@@ -30,10 +30,6 @@ export const help: Help = {
   ],
 };
 
-const getURLForMessage = (message: string, language: string = 'en', volume: number): Promise<string> => {
-  return googleTTS(message, language, 1);
-};
-
 const getTTSMessage = (message: string, language: string = 'en', volume: number = 1,
                        basedir: string = '/tmp/cached_voices', cache: boolean = true): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
@@ -49,9 +45,8 @@ const getTTSMessage = (message: string, language: string = 'en', volume: number 
         if (exists) {
           return resolve(filename);
         }
-
-        getURLForMessage(message, language, volume)
-          .then((url) => {
+        googleTTS(message, language, volume)
+          .then((url: string) => {
             const stream = createWriteStream(filename);
             stream.addListener('close', () => resolve(filename));
             stream.addListener('error', (err) => reject(err));
