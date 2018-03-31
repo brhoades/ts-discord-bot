@@ -1,6 +1,8 @@
 import { GuildChannel, Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
 import { Readable } from 'stream';
 
+import MapToArray from '../lib/maptoarray';
+
 class QueuedItem {
   constructor(public channel: VoiceChannel, public func: TakesConnection) {
   }
@@ -10,10 +12,10 @@ type TakesConnection = (connection: VoiceConnection) => StreamDispatcher;
 
 export default class VoiceManager {
   private dispatchers: StreamDispatcher[] = [];
-  private queue: Map<string, QueuedItem[]>;
+  private queue: MapToArray<string, QueuedItem>;
 
   constructor(private client: Client) {
-    this.queue = new Map<string, QueuedItem[]>();
+    this.queue = new MapToArray<string, QueuedItem>();
   }
 
   public play(staleChannel: VoiceChannel, func: TakesConnection) {
@@ -53,45 +55,24 @@ export default class VoiceManager {
   }
 
   public enqueueStream(channel: VoiceChannel, stream: Readable, limit: number = -1) {
-    if (!this.queue.has(channel.guild.id)) {
-      this.queue.set(channel.guild.id, []);
-    }
-
-    if (limit > 0 && this.queue.get(channel.guild.id).length > limit) {
-      console.debug('Tossed stream from queue as limit was reached.');
-      return;
-    }
-
-    this.queue.get(channel.guild.id).push(new QueuedItem(channel, (conn) => conn.playStream(stream)));
+    this.queue.push(
+      channel.guild.id, new QueuedItem(channel, (conn) => conn.playStream(stream)), limit,
+    );
   }
 
   public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, limit: number = -1) {
-    if (!this.queue.has(channel.guild.id)) {
-      this.queue.set(channel.guild.id, []);
-    }
-
-    if (limit > 0 && this.queue.get(channel.guild.id).length > limit) {
-      console.debug('Tossed arbitrary input from queue as limit was reached.');
-      return;
-    }
-
-    this.queue.get(channel.guild.id).push(
+    this.queue.push(
+      channel.guild.id,
       new QueuedItem(channel, (connection: VoiceConnection) => connection.playArbitraryInput(arbitraryInput)),
+      limit,
     );
   }
 
   public enqueueFile(channel: VoiceChannel, file: string, limit: number = -1) {
-    if (!this.queue.has(channel.guild.id)) {
-      this.queue.set(channel.guild.id, []);
-    }
-
-    if (limit > 0 && this.queue.get(channel.guild.id).length > limit) {
-      console.debug('Tossed arbitrary input from queue as limit was reached.');
-      return;
-    }
-
-    this.queue.get(channel.guild.id).push(
+    this.queue.push(
+      channel.guild.id,
       new QueuedItem(channel, (connection: VoiceConnection) => connection.playFile(file)),
+      limit,
     );
   }
 
