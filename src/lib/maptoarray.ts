@@ -76,4 +76,8 @@ export default class MapToArray<T, S> {
   public forEach(iterator: (queue: S[]) => any) {
     return this.data.forEach(iterator);
   }
+
+  public has(key: T): boolean {
+    return this.data.has(key);
+  }
 }

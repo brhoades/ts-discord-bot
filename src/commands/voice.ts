@@ -84,12 +84,8 @@ export const register = (client: Client) => {
   // set up queue proceessing
   setInterval(() => { manager.processQueue(); }, 500);
 
-  client.onMessage((message) => {
-    if (!message.command) {
-      return;
-    }
-
-    if (message.command === 'play' && message.args.length > 0) {
+  client.onCommand('play', (message) => {
+    if (message.args.length > 0) {
       const url = message.args[0];
 
       if (!message.member.voiceChannel) {
@@ -103,13 +99,13 @@ export const register = (client: Client) => {
         manager.enqueueArbitraryInput(message.member.voiceChannel, url);
       }
     }
+  });
 
-    if (message.command === 'stop') {
-      if (manager.stopPlaying(message.guild)) {
-        message.reply('Stopped');
-      } else {
-        message.reply('Not currently playing anything on this server.');
-      }
+  client.onCommand('stop', (message) => {
+    if (manager.stopPlaying(message.guild)) {
+      message.reply('Stopped');
+    } else {
+      message.reply('Not currently playing anything on this server.');
     }
   });
 

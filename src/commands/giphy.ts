@@ -39,15 +39,9 @@ export const help: Help = {
 };
 
 export const register = (client: Client) => {
-  client.onMessage((message) => {
-    if (!message.command) {
-      return;
-    }
-
-    if (message.command === 'gp') {
-      giphy(message.args)
-        .then((imageURL) => message.channel.send(imageURL))
-        .catch(err => message.reply(err.message));
-    }
+  client.onCommand(['giphy', 'gp'], (message) => {
+    giphy(message.args)
+      .then((imageURL) => message.channel.send(imageURL))
+      .catch(err => message.reply(err.message));
   });
 };

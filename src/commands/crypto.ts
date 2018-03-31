@@ -311,12 +311,7 @@ export const help: Help = {
   ],
 };
 export const register = (client: Client) => {
-  client.onMessage((message) => {
-    if (!message.command) {
-      return;
-    }
-
-    if (['crypto', 'cc'].some(v => v === message.command)) {
+  client.onCommand(['crypto', 'cc'], (message) => {
       getCoins().then((coins) => {
         if (message.args.length === 0) {
           const data = coins.slice(0, 10).map(c => [c.name, c.price_usd, c.percent_change_1h]);
@@ -325,10 +320,11 @@ export const register = (client: Client) => {
           getCoin(message.args[0]).then((coin) => message.channel.send({ embed: renderCoin(coin) }));
         }
       });
-    } else if (COIN_COMMANDS.some(c => c === message.command)) {
+  });
+
+  client.onCommand(COIN_COMMANDS, (message) => {
       const details = getCoin(message.command).then((coin) => {
         message.channel.send({ embed: renderCoin(coin) });
       }).catch((err) => message.reply(err.message));
-    }
   });
 };

@@ -72,15 +72,9 @@ export const help: Help = {
 };
 
 export const register = (client: Client) => {
-  client.onMessage((message) => {
-    if (!message.command) {
-      return;
-    }
-
-    if (message.command === 'ud' || message.command === 'urban') {
-      urban(message.args)
-        .then((response) => message.channel.send(response))
-        .catch(err => message.reply(err.message));
-    }
+  client.onCommand(['ud', 'urban'], (message) => {
+    urban(message.args)
+      .then((response) => message.channel.send(response))
+      .catch(err => message.reply(err.message));
   });
 };

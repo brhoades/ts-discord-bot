@@ -16,22 +16,20 @@ export const help: Help = {
 };
 
 export const register = (client: Client) => {
-  client.onMessage((message) => {
-    if (message.command === 'help') {
-      const commands = client.commands
-                             .reduce((acc, com) => [...acc, ...com.help.commands], []);
-      if (message.args.length > 0) {
-        const commandRegex = new RegExp(`!?${message.args[0]}`);
-        const match = commands.find((c: HelpCommand) => commandRegex.test(c.invocation));
+  client.onCommand('help', (message) => {
+    const commands = client.commands
+                           .reduce((acc, com) => [...acc, ...com.help.commands], []);
+    if (message.args.length > 0) {
+      const commandRegex = new RegExp(`!?${message.args[0]}`);
+      const match = commands.find((c: HelpCommand) => commandRegex.test(c.invocation));
 
-        if (match) {
-          message.channel.send(`Help for: ${match.invocation}\n${match.description}`);
-        } else {
-          message.channel.send(`Unknown command ${message.args[0]}.`);
-        }
+      if (match) {
+        message.channel.send(`Help for: ${match.invocation}\n${match.description}`);
       } else {
-        message.channel.send(commands.map(c => ` ${c.invocation}: ${c.shortDescription}`).join('\n'));
+        message.channel.send(`Unknown command ${message.args[0]}.`);
       }
+    } else {
+      message.channel.send(commands.map(c => ` ${c.invocation}: ${c.shortDescription}`).join('\n'));
     }
   });
 };
