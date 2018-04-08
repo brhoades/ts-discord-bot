@@ -97,7 +97,10 @@ const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceCh
                         options: Partial<TTSOptions> = {}) => {
   getTTSMessage(message, options)
     .then((file: string) => {
-      manager.enqueueFile(channel, file, { limit: 3 });
+      manager.enqueueFile(channel, file, {
+        limit: 3,
+        removeFile: !options.cache,
+      });
     })
     .catch((err) => {
       console.error(`Error when getting a TTS join/part message: ${err.message}`);
