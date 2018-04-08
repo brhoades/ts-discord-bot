@@ -7,10 +7,10 @@ import { createWriteStream, exists as pathExists, mkdirSync, write as fileWrite 
 import { get as httpsGet } from 'https';
 import { join as pathJoin } from 'path';
 
-import Client from '../lib/client';
-import ParsedMessage from '../lib/parsedmessage';
-import VoiceManager from '../lib/voicemanager';
-import { Help } from '../types/command';
+import Client from '../../lib/client';
+import ParsedMessage from '../../lib/parsedmessage';
+import VoiceManager from '../../lib/voicemanager';
+import { Help } from '../../types/module';
 
 export const name = 'Voice';
 export const help: Help = {

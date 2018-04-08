@@ -34,6 +34,21 @@ export default class Client extends DiscordClient {
             }
 
             if (stats.isDirectory()) {
+              const indexRequirePath = join(modulePath, 'index');
+              const indexPath = join(modulePath, 'index.ts');
+              stat(indexPath, (indexStatsErr, indexStats) => {
+                if (err) {
+                  return reject(err);
+                }
+
+                if (indexStats && indexStats.isFile()) {
+                  this.loadModule(indexRequirePath);
+                  return;
+                }
+
+                console.debug(`Module ${identifier} lacks a requireable index file at path ${indexPath}`);
+                resolve();
+              });
               return;
             }
 
