@@ -9,7 +9,7 @@ import { join as pathJoin } from 'path';
 
 import Client from '../../lib/client';
 import ParsedMessage from '../../lib/parsedmessage';
-import VoiceManager from '../../lib/voicemanager';
+import VoiceManager from './voicemanager';
 import { Help } from '../../types/module';
 
 export const name = 'Voice';

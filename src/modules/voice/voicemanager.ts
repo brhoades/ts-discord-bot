@@ -1,9 +1,8 @@
 import { GuildChannel, Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
 import { Readable } from 'stream';
-
 import { unlink } from 'fs';
 
-import MapToArray from '../lib/maptoarray';
+import MapToArray from '../../lib/maptoarray';
 
 class QueuedItem {
   constructor(public channel: VoiceChannel, public func: TakesConnection) {
