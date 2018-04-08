@@ -42,14 +42,14 @@ export const help: Help = {
 interface TTSOptions {
   language: string;
   volume: number;
-  cache: boolean;
+  removeFile: boolean;
   basedir: string;
 }
 
 const defaultOptions: TTSOptions = {
   basedir: '/tmp/cached_voices',
-  cache: true,
   language: 'en',
+  removeFile: false,
   volume: 1,
 };
 
@@ -95,11 +95,12 @@ const getTTSMessage = (message: string, rawOptions: Partial<TTSOptions>): Promis
 
 const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceChannel,
                         options: Partial<TTSOptions> = {}) => {
+  const inferredOptions = { ...defaultOptions, ...options };
   getTTSMessage(message, options)
     .then((file: string) => {
       manager.enqueueFile(channel, file, {
         limit: 3,
-        removeFile: !options.cache,
+        removeFile: inferredOptions.removeFile,
       });
     })
     .catch((err) => {
@@ -170,7 +171,7 @@ export const register = (client: Client) => {
     }
 
     playTTSMessage(manager, ttsMessage, message.member.voiceChannel, {
-      cache: false,
+      removeFile: true,
       language,
     });
   });
@@ -178,19 +179,32 @@ export const register = (client: Client) => {
   client.on('voiceStateUpdate', (oldMember: GuildMember, newMember: GuildMember) => {
     if (oldMember.voiceChannel !== newMember.voiceChannel && !oldMember.user.bot && !newMember.user.bot) {
       const userName = newMember.nickname ? newMember.nickname : newMember.displayName;
-
       const filterBots = (m: GuildMember) => !m.user.bot;
+      const newVoiceChannel = newMember.voiceChannel;
+      const oldVoiceChannel = oldMember.voiceChannel;
+      let played = false;
 
       // there seems to be a bug with discordjs@11.3.2 where short clips won't play. I added 'has' here.
-      if (newMember.voiceChannel && newMember.voiceChannel.speakable
-          && newMember.voiceChannel.joinable && newMember.voiceChannel.members.some(filterBots)) {
-        playTTSMessage(manager, `${userName} has joined`, newMember.voiceChannel);
+      if (newVoiceChannel && newVoiceChannel.speakable && newVoiceChannel.joinable
+          && newVoiceChannel.members.some(filterBots)) {
+        playTTSMessage(manager, `${userName} has joined`, newVoiceChannel);
+        played = true;
       }
 
 
-      if (oldMember.voiceChannel && oldMember.voiceChannel.speakable
-          && oldMember.voiceChannel.joinable && oldMember.voiceChannel.members.some(filterBots)) {
-        playTTSMessage(manager, `${userName} has left`, oldMember.voiceChannel);
+      if (oldVoiceChannel && oldVoiceChannel.speakable && oldVoiceChannel.joinable
+          && oldVoiceChannel.members.some(filterBots)) {
+        playTTSMessage(manager, `${userName} has left`, oldVoiceChannel);
+        played = true;
+      }
+
+      if (!played) {
+        // leave if either channel is empty and we didn't queue something.
+        if (oldVoiceChannel && oldVoiceChannel.connection && !oldVoiceChannel.members.some(filterBots)) {
+          oldVoiceChannel.connection.disconnect();
+        } else if (newVoiceChannel && newVoiceChannel.connection && !newVoiceChannel.members.some(filterBots)) {
+          newVoiceChannel.connection.disconnect();
+        }
       }
     }
   });

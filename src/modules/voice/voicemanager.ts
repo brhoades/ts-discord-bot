@@ -107,7 +107,6 @@ export default class VoiceManager {
           );
 
           dispatcher.on('end', unlinkCallback);
-          dispatcher.on('error', unlinkCallback);
         }
 
         return dispatcher;

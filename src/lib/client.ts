@@ -42,7 +42,9 @@ export default class Client extends DiscordClient {
                 }
 
                 if (indexStats && indexStats.isFile()) {
-                  this.loadModule(indexRequirePath);
+                  this.loadModule(indexRequirePath)
+                      .then(() => resolve())
+                      .catch((err) => reject(err));
                   return;
                 }
 
@@ -52,8 +54,9 @@ export default class Client extends DiscordClient {
               return;
             }
 
-            this.loadModule(modulePath);
-            resolve();
+            this.loadModule(modulePath)
+                .then(() => resolve())
+                .catch((err) => reject(err));
           });
         });
       })).then((modules) => {
@@ -109,7 +112,7 @@ export default class Client extends DiscordClient {
         const module: Module = require(path);
 
         this.modules.push(module);
-        console.log(`Loaded module ${module.name}`);
+        console.debug(`Initialized ${module.name} module`);
         resolve(module);
       } catch (e) {
         reject(e);
