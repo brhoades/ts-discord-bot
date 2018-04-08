@@ -1,26 +1,16 @@
 import { dirname, join } from 'path';
-import { readdirSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import * as process from 'process';
 
 import Client from './lib/client';
-import { Command } from './types/command';
 
 const client = new Client();
 const config = JSON.parse(readFileSync('./config.json', 'utf-8'));
 
-const loadModules = (path: string) => {
-  readdirSync(path).map((file: string) => {
-    const command: Command = require(join(path, file));
-    client.addCommand(command);
-  });
-
-  client.registerCommands();
-};
-
-loadModules(join(dirname(__filename), 'commands'));
+client.loadModules(join(dirname(__filename), 'modules'));
 
 client.on('ready', () => {
-  console.log('Ready');
+  console.log('Connected');
 });
 
 client.on('error', (error) => {

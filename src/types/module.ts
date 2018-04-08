@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 
-export interface Command {
+export interface Module {
   name: string;
   register: (client: Client) => void;
   help: Help;

@@ -80,4 +80,8 @@ export default class MapToArray<T, S> {
   public has(key: T): boolean {
     return this.data.has(key);
   }
+
+  public get length(): number {
+    return this.data.size;
+  }
 }
