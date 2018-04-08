@@ -97,7 +97,7 @@ const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceCh
                         options: Partial<TTSOptions> = {}) => {
   getTTSMessage(message, options)
     .then((file: string) => {
-      manager.enqueueFile(channel, file, 3);
+      manager.enqueueFile(channel, file, { limit: 3 });
     })
     .catch((err) => {
       console.error(`Error when getting a TTS join/part message: ${err.message}`);
@@ -114,6 +114,16 @@ export const register = (client: Client) => {
   client.onCommand('play', (message) => {
     if (message.args.length > 0) {
       const url = message.args[0];
+      let volume = parseFloat(message.args.length > 1 ? message.args[1] : '1');
+
+      console.dir(message.args);
+      if (volume > 1) {
+        volume = 1;
+      } else if (volume < 0) {
+        return;
+      } else {
+        volume *= 100;
+      }
 
       if (!message.member.voiceChannel) {
         message.reply('You must be in a voice channel in order to use this command.');
@@ -121,9 +131,9 @@ export const register = (client: Client) => {
       }
 
       if (url.match(/youtube\.com/)) {
-        manager.enqueueStream(message.member.voiceChannel, ytdl(url, { filter: 'audioonly' }));
+        manager.enqueueStream(message.member.voiceChannel, ytdl(url, { filter: 'audioonly' }), { volume });
       } else {
-        manager.enqueueArbitraryInput(message.member.voiceChannel, url);
+        manager.enqueueArbitraryInput(message.member.voiceChannel, url, { volume });
       }
     }
   });

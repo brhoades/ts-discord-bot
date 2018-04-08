@@ -12,6 +12,18 @@ class QueuedItem {
 
 type TakesConnection = (connection: VoiceConnection) => StreamDispatcher;
 
+interface PlayOptions {
+  limit: number;
+  volume: number;
+  removeFile: boolean;
+}
+
+const defaultPlayOptions = {
+  limit: 3,
+  removeFile: false,
+  volume: 1,
+};
+
 export default class VoiceManager {
   private dispatchers: StreamDispatcher[] = [];
   private queue: MapToArray<string, QueuedItem>;
@@ -56,29 +68,34 @@ export default class VoiceManager {
     return true;
   }
 
-  public enqueueStream(channel: VoiceChannel, stream: Readable, limit: number = -1) {
+  public enqueueStream(channel: VoiceChannel, stream: Readable, options: Partial<PlayOptions>) {
+    const inferredOptions = { ...defaultPlayOptions, ...options };
+
     this.queue.push(
-      channel.guild.id, new QueuedItem(channel, (conn) => conn.playStream(stream)), limit,
+      channel.guild.id, new QueuedItem(channel, (conn) => conn.playStream(stream, { volume: inferredOptions.volume })),
+      inferredOptions.limit,
     );
   }
 
-  public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, limit: number = -1) {
+  public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, options: Partial<PlayOptions>) {
+    const inferredOptions = { ...defaultPlayOptions, ...options };
     this.queue.push(
       channel.guild.id,
-      new QueuedItem(channel, (connection: VoiceConnection) => connection.playArbitraryInput(arbitraryInput)),
-      limit,
+      new QueuedItem(channel, (connection: VoiceConnection) => connection.playArbitraryInput(arbitraryInput, { volume: inferredOptions.volume })),
+      inferredOptions.limit,
     );
   }
 
-  public enqueueFile(channel: VoiceChannel, file: string, limit: number = -1,
-                     removeFile: boolean = false) {
+  public enqueueFile(channel: VoiceChannel, file: string, options: Partial<PlayOptions>) {
+    const inferredOptions = { ...defaultPlayOptions, ...options };
+
     this.queue.push(
       channel.guild.id,
       new QueuedItem(channel, (connection: VoiceConnection) => {
         const dispatcher = connection.playFile(file);
 
         // FIXME: this should be the caller's problem
-        if (removeFile) {
+        if (options.removeFile) {
           const unlinkCallback = () => (
             unlink(file, (err) => {
               if (err) {
@@ -95,7 +112,7 @@ export default class VoiceManager {
 
         return dispatcher;
       }),
-      limit,
+      inferredOptions.limit,
     );
   }
 
