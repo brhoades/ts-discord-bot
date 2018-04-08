@@ -7,17 +7,16 @@
   "license": "AGPL3+",
   "scripts": {
     "build": "tsc -p .",
-    "build:live": "tsc -p . -w",
-    "dev": "nodemon dist/index.js"
+    "dev": "nodemon -e ts"
   },
   "devDependencies": {
     "@types/node": "^9.6.0",
+    "@types/table": "^4.0.4",
     "nodemon": "^1.17.2",
     "ts-node": "^5.0.1",
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "@types/table": "^4.0.4",
     "bufferutil": "^3.0.0",
     "discord.js": "^11.3.2",
     "erlpack": "discordapp/erlpack",

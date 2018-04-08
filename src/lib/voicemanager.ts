@@ -79,6 +79,7 @@ export default class VoiceManager {
 
   public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
+
     this.queue.push(
       channel.guild.id,
       new QueuedItem(channel, (connection: VoiceConnection) => connection.playArbitraryInput(arbitraryInput, { volume: inferredOptions.volume })),

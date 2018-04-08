@@ -36,7 +36,7 @@ client.on('debug', (debug) => {
   console.debug(`Client debuging: ${debug}`);
 });
 
-process.on('SIGINT', () => {
+process.once('SIGINT', () => {
   console.log('Quitting...');
 
   client.destroy();
@@ -50,7 +50,9 @@ process.once('SIGUSR2', () => {
   console.log('Reloading...');
 
   client.destroy();
-  process.kill(process.pid, 'SIGUSR2');
+  client.on('disconnect', () => {
+    process.kill(process.pid, 'SIGUSR2');
+  });
 });
 
 client.login(config.token);

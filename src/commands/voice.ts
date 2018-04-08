@@ -116,13 +116,10 @@ export const register = (client: Client) => {
       const url = message.args[0];
       let volume = parseFloat(message.args.length > 1 ? message.args[1] : '1');
 
-      console.dir(message.args);
       if (volume > 1) {
         volume = 1;
-      } else if (volume < 0) {
+      } else if (volume <= 0) {
         return;
-      } else {
-        volume *= 100;
       }
 
       if (!message.member.voiceChannel) {
