@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@types/node": "^9.6.0",
+    "@types/request": "^2.47.0",
     "@types/table": "^4.0.4",
     "nodemon": "^1.17.2",
     "ts-node": "^5.0.1",
@@ -23,6 +24,7 @@
     "google-tts-api": "^0.0.2",
     "node-opus": "^0.2.7",
     "opusscript": "^0.0.6",
+    "request": "^2.85.0",
     "sodium": "^2.0.3",
     "table": "^4.0.3",
     "typed-rest-client": "^1.0.7",

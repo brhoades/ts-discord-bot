@@ -1,6 +1,6 @@
 import { Client as DiscordClient, Message as DiscordMessage } from 'discord.js';
-import { join } from 'path';
 import { readdir, readFile, stat } from 'fs';
+import { join } from 'path';
 
 import { Module } from '../types/module';
 import MapToArray from './maptoarray';
@@ -37,14 +37,14 @@ export default class Client extends DiscordClient {
               const indexRequirePath = join(modulePath, 'index');
               const indexPath = join(modulePath, 'index.ts');
               stat(indexPath, (indexStatsErr, indexStats) => {
-                if (err) {
-                  return reject(err);
+                if (indexStatsErr) {
+                  return reject(indexStatsErr);
                 }
 
                 if (indexStats && indexStats.isFile()) {
                   this.loadModule(indexRequirePath)
                       .then(() => resolve())
-                      .catch((err) => reject(err));
+                      .catch((loadErr) => reject(loadErr));
                   return;
                 }
 
@@ -56,7 +56,7 @@ export default class Client extends DiscordClient {
 
             this.loadModule(modulePath)
                 .then(() => resolve())
-                .catch((err) => reject(err));
+                .catch((loadErr) => reject(loadErr));
           });
         });
       })).then((modules) => {
@@ -73,6 +73,30 @@ export default class Client extends DiscordClient {
   // Call once. Registers all modules.
   public registerModules() {
     this.modules.map(c => c.register(this));
+  }
+
+  public config<T>(module: string): Promise<T> {
+    const configDir = join(process.cwd(), 'config', `${module}.json`);
+
+    return new Promise<T>((resolve, reject) => {
+      stat(configDir, (statErr, stats) => {
+        if (statErr) {
+          return reject(statErr);
+        }
+
+        if (!stats || !stats.isFile) {
+          return reject(new Error(`No config for ${module} found`));
+        }
+
+        readFile(configDir, (err, data) => {
+          if (err) {
+            return reject(err);
+          }
+
+          resolve(JSON.parse(data.toString()));
+        });
+      });
+    });
   }
 
   // Wraps on message to provide some useful command processing.
