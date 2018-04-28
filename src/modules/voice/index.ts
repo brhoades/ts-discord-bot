@@ -137,7 +137,15 @@ export const register = (client: Client) => {
         try {
           manager.enqueueStream(message.member.voiceChannel, ytdl(url, { filter: 'audioonly' }), { volume });
         } catch (error) {
-          client.log.error('Error playing a YouTube video.', { parsedMessage: message, error, url, volume });
+          client.log.error('Error playing a YouTube video.', {
+            error: {
+              mesage: error.message,
+              stack: error.stack,
+            },
+            parsedMessage: message,
+            url,
+            volume,
+          });
           message.reply('Error playing the provided url.');
         }
       } else {

@@ -111,6 +111,7 @@ export default class Logger {
   // Does shallow serialization of only useful keys on reserved meta keys.
   private serialize(meta: any): string {
     const ret: any = {};
+    console.log(meta['error']);
 
     Object.keys(meta).forEach(k => {
       if (k === 'guild' && meta[k]) {
@@ -177,13 +178,6 @@ export default class Logger {
             displayName: message.member.displayName,
             nickname: message.member.nickname,
           },
-        };
-      } else if (k === 'error') {
-        const error: Error = meta[k];
-
-        ret[k] = {
-          message: error.message,
-          stack: error.stack,
         };
       } else if (k === 'voiceQueue') {
         ret[k] = {

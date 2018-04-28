@@ -191,7 +191,13 @@ export default class VoiceManager {
     });
 
     dispatcher.on('error', (error: Error) => {
-      this.client.log.debug(`Dispatcher errored.`, { dispatcher, error });
+      this.client.log.debug(`Dispatcher errored.`, {
+        dispatcher,
+        error: {
+          mesage: error.message,
+          stack: error.stack,
+        },
+      });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
       this.processQueue();
     });
