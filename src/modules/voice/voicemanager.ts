@@ -1,7 +1,8 @@
-import { GuildChannel, Client, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
-import { Readable } from 'stream';
+import { GuildChannel, Guild, StreamDispatcher, Message, GuildMember, VoiceChannel, VoiceConnection } from 'discord.js';
 import { unlink } from 'fs';
+import { Readable } from 'stream';
 
+import Client from '../../lib/client';
 import MapToArray from '../../lib/maptoarray';
 
 class QueuedItem {
@@ -38,7 +39,10 @@ export default class VoiceManager {
     );
 
     if (channels.array().length === 0) {
-      console.error('No match found');
+      this.client.log.error(
+        `No match found for playing queued message on "${staleChannel.name}" `
+        + `with guild "${staleChannel.guild.name}".`,
+      );
       return;
     }
 
@@ -52,7 +56,10 @@ export default class VoiceManager {
     channel
       .join()
       .then((conn) => this.handleDispatchers(func(conn)))
-      .catch((err: Error) => console.error(`Error when joining: ${err.message}\n${err.stack}`));
+      .catch((err: Error) => {
+        this.client.log.error(`Error when joining "${channel.name}" on "${channel.guild.name}" to play queued file:`);
+        this.client.log.error(`${err.message}\n${err.stack}`);
+      });
   }
 
   public stopPlaying(guild: Guild): boolean {
@@ -70,6 +77,7 @@ export default class VoiceManager {
   public enqueueStream(channel: VoiceChannel, stream: Readable, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
 
+    this.client.log.debug(`Enqueueing stream for "${channel.name}" on "${channel.guild.name}"`);
     this.queue.push(
       channel.guild.id, new QueuedItem(channel, (conn) => conn.playStream(stream, { volume: inferredOptions.volume })),
       inferredOptions.limit,
@@ -79,9 +87,15 @@ export default class VoiceManager {
   public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
 
+    this.client.log.debug(`Enqueueing arbitrary input for "${channel.name}" on "${channel.guild.name}"`);
     this.queue.push(
       channel.guild.id,
-      new QueuedItem(channel, (connection: VoiceConnection) => connection.playArbitraryInput(arbitraryInput, { volume: inferredOptions.volume })),
+      new QueuedItem(
+        channel,
+        (connection: VoiceConnection) => (
+          connection.playArbitraryInput(arbitraryInput, { volume: inferredOptions.volume })
+        ),
+      ),
       inferredOptions.limit,
     );
   }
@@ -89,19 +103,21 @@ export default class VoiceManager {
   public enqueueFile(channel: VoiceChannel, file: string, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
 
+    this.client.log.debug(`Enqueueing file for ${channel.name} on ${channel.guild.name}`);
     this.queue.push(
       channel.guild.id,
       new QueuedItem(channel, (connection: VoiceConnection) => {
         const dispatcher = connection.playFile(file);
 
+        this.client.log.debug(`Playing enqueued file "${file}" for "${channel.name}" on "${channel.guild.name}".`);
         // FIXME: this should be the caller's problem
         if (options.removeFile) {
           const unlinkCallback = () => (
             unlink(file, (err) => {
               if (err) {
-                console.error('Error cleaning up after file.');
-                console.error(err.message);
-                console.error(err.stack);
+                this.client.log.error('Error cleaning up after file.');
+                this.client.log.error(err.message);
+                this.client.log.error(err.stack);
               }
             })
           );
@@ -123,11 +139,15 @@ export default class VoiceManager {
 
       const { channel, func } = streams[0];
 
+      this.client.log.debug(`Playing queued stream for "${channel.name}" on "${channel.guild.name}".`);
+      this.client.log.debug(`${streams.length} stream(s) are queued for guild "${channel.guild.name}".`);
       const matches = this.dispatchers.filter(d => d.player.voiceConnection.channel.guild === channel.guild);
       if (matches.length) {
+        this.client.log.debug(`Aforementioned stream remains queued as ${matches.length} dispatchers are playing.`);
         return;
       }
 
+      this.client.log.debug('Playing aforementioned stream, popped off queue.');
       this.play(channel, func);
       streams.shift();
     });
@@ -135,17 +155,26 @@ export default class VoiceManager {
 
   private handleDispatchers(dispatcher: StreamDispatcher) {
     this.dispatchers.push(dispatcher);
+    const conn = dispatcher.player.voiceConnection;
+
+    this.client.log.debug(`New dispatcher for "${conn.channel.name}" on "${conn.channel.guild.name}" created.`);
 
     dispatcher.on('finish', () => {
+      this.client.log.debug(
+        `Finished playing dispatcher on "${conn.channel.name}" on guild "${conn.channel.guild.name}".`,
+      );
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
     });
 
     dispatcher.on('end', () => {
+      this.client.log.debug(`Dispatcher on "${conn.channel.name}" on guild "${conn.channel.guild.name}" ended.`);
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
     });
 
-    dispatcher.on('error', (error) => {
-      console.error(error);
+    dispatcher.on('error', (error: Error) => {
+      this.client.log.debug(
+        `Dispatcher on "${conn.channel.name}" on guild "${conn.channel.guild.name}" errored: ${error}.`,
+      );
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
     });
   }

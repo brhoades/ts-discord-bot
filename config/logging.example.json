@@ -1,0 +1,6 @@
+{
+  "consoleLevel": "info",
+  "destinationFile": "default.log",
+  "enabled": true,
+  "fileLevel": "debug"
+}

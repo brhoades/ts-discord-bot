@@ -7,7 +7,7 @@ export const name = 'Bot Control';
 export const help: Help = {
   commands: [
     {
-      description: 'Kills the bot\'s connection to the server.',
+      description: 'Kills the bot',
       invocation: '**!quit**',
       invocationTest: new RegExp(`^!quit`),
       shortDescription: 'Kills the bot entirely.',

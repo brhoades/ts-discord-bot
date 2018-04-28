@@ -3,18 +3,21 @@ import { readdir, readFile, stat } from 'fs';
 import { join } from 'path';
 
 import { Module } from '../types/module';
+import Logger from './logger';
 import MapToArray from './maptoarray';
 import ParsedMessage from './parsedmessage';
 
 type ModuleListener = (message: ParsedMessage) => any;
 
 export default class Client extends DiscordClient {
+  public log: Logger;
   public modules: Module[] = [];
   public moduleListeners: MapToArray<string, ModuleListener>;
 
   public constructor() {
     super();
 
+    this.log = new Logger(this);
     this.moduleListeners = new MapToArray<string, ModuleListener>();
     this.on('message', this.processModule.bind(this));
   }
@@ -48,7 +51,7 @@ export default class Client extends DiscordClient {
                   return;
                 }
 
-                console.debug(`Module ${identifier} lacks a requireable index file at path ${indexPath}`);
+                this.log.warn(`Module ${identifier} lacks a requireable index file at path ${indexPath}`);
                 resolve();
               });
               return;
@@ -60,12 +63,12 @@ export default class Client extends DiscordClient {
           });
         });
       })).then((modules) => {
-        console.log(`${this.modules.length} modules loaded.`);
+        this.log.info(`${this.modules.length} modules loaded.`);
         this.registerModules();
-        console.log(`${this.moduleListeners.length} module hooks ready.`);
+        this.log.info(`${this.moduleListeners.length} module hooks ready.`);
       }).catch((loadingErr: Error) => {
-        console.error(`Error loading bot modules: ${loadingErr.message}.`);
-        console.error(loadingErr.stack);
+        this.log.error(`Error loading bot modules: ${loadingErr.message}.`);
+        this.log.error(loadingErr.stack);
       });
     });
   }
@@ -136,7 +139,7 @@ export default class Client extends DiscordClient {
         const module: Module = require(path);
 
         this.modules.push(module);
-        console.debug(`Initialized ${module.name} module`);
+        this.log.debug(`Initialized ${module.name} module`);
         resolve(module);
       } catch (e) {
         reject(e);
