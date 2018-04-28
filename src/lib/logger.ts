@@ -37,19 +37,28 @@ export default class Logger {
         this.winston = new WLogger({
           transports: [
             new transports.Console({
-              formatter: (options) => {
-                return (
-                  options.timestamp()
-                  + '\t'
-                  + WConfig.colorize(options.level, `[${options.level.toUpperCase()}]`)
-                  + '\t'
-                  + options.message ? options.message : ''
-                  + options.meta ? `\n${JSON.stringify(options.meta)}` : ''
-                );
-              },
+              formatter: (options) => (
+                `${new Date().toISOString()}`
+                + '  '
+                + WConfig.colorize(options.level, `[${options.level.toUpperCase()}]`)
+                + '  '
+                + (options.message ? options.message : '')
+                + (options.meta && Object.keys(options.meta).length ? `\n${JSON.stringify(options.meta)}` : '')
+              ),
               level: config.consoleLevel,
             }),
-            new transports.File({ filename: config.destinationFile, level: config.fileLevel }),
+            new transports.File({
+              filename: config.destinationFile,
+              formatter: (options) => (
+                `${new Date().toISOString()}`
+                + '\t'
+                + options.level.toUpperCase()
+                + '\t'
+                + (options.message ? options.message : '')
+                + (options.meta && Object.keys(options.meta).length ? `\n${JSON.stringify(options.meta)}` : '')
+              ),
+              level: config.fileLevel,
+            }),
           ],
         });
       }).catch((err) => {
