@@ -132,8 +132,22 @@ export const register = (client: Client) => {
       }
 
       if (url.match(/youtube\.com/)) {
-        manager.enqueueStream(message.member.voiceChannel, ytdl(url, { filter: 'audioonly' }), { volume });
+        client.log.debug('Enqueuing YouTube video', {
+          parsedMessage: message,
+          url,
+          volume,
+        });
+        try {
+          manager.enqueueStream(message.member.voiceChannel, ytdl(url, { filter: 'audioonly' }), { volume });
+        } catch (error) {
+          client.log.error('Error playing a YouTube video.', { parsedMessage: message, error, url, volume });
+          message.reply('Error playing the provided url.');
+        }
       } else {
+        client.log.debug('Enqueuing arbitrary URL', {
+          parsedMessage: message,
+          url,
+        });
         manager.enqueueArbitraryInput(message.member.voiceChannel, url, { volume });
       }
     }
@@ -170,9 +184,13 @@ export const register = (client: Client) => {
       return;
     }
 
+    client.log.debug('Playing TTS message', {
+      parsedMessage: message,
+      ttsMessage,
+    });
     playTTSMessage(manager, ttsMessage, message.member.voiceChannel, {
-      removeFile: true,
       language,
+      removeFile: true,
     });
   });
 
@@ -188,6 +206,10 @@ export const register = (client: Client) => {
       if (newVoiceChannel && newVoiceChannel.speakable && newVoiceChannel.joinable
           && newVoiceChannel.members.some(filterBots)) {
         playTTSMessage(manager, `${userName} has joined`, newVoiceChannel);
+        client.log.debug('Playing join message', {
+          channel: oldVoiceChannel,
+          member: newMember,
+        });
         played = true;
       }
 
@@ -195,14 +217,26 @@ export const register = (client: Client) => {
       if (oldVoiceChannel && oldVoiceChannel.speakable && oldVoiceChannel.joinable
           && oldVoiceChannel.members.some(filterBots)) {
         playTTSMessage(manager, `${userName} has left`, oldVoiceChannel);
+        client.log.debug('Playing part message', {
+          channel: oldVoiceChannel,
+          member: newMember,
+        });
         played = true;
       }
 
       if (!played) {
         // leave if either channel is empty and we didn't queue something.
         if (oldVoiceChannel && oldVoiceChannel.connection && !oldVoiceChannel.members.some(filterBots)) {
+          client.log.debug('Leaving now empty channel', {
+            channel: oldVoiceChannel,
+            member: newMember,
+          });
           oldVoiceChannel.connection.disconnect();
         } else if (newVoiceChannel && newVoiceChannel.connection && !newVoiceChannel.members.some(filterBots)) {
+          client.log.debug('Leaving now empty channel', {
+            channel: newVoiceChannel,
+            member: newMember,
+          });
           newVoiceChannel.connection.disconnect();
         }
       }

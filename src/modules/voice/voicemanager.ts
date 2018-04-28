@@ -40,8 +40,7 @@ export default class VoiceManager {
 
     if (channels.array().length === 0) {
       this.client.log.error(
-        `No match found for playing queued message on "${staleChannel.name}" `
-        + `with guild "${staleChannel.guild.name}".`,
+        'No channel match found for playing queued message.', { channel: staleChannel },
       );
       return;
     }
@@ -77,7 +76,11 @@ export default class VoiceManager {
   public enqueueStream(channel: VoiceChannel, stream: Readable, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
 
-    this.client.log.debug(`Enqueueing stream for "${channel.name}" on "${channel.guild.name}"`);
+    this.client.log.debug('Enqueueing stream.', {
+      channel,
+      options,
+    });
+
     this.queue.push(
       channel.guild.id, new QueuedItem(channel, (conn) => conn.playStream(stream, { volume: inferredOptions.volume })),
       inferredOptions.limit,
@@ -87,7 +90,7 @@ export default class VoiceManager {
   public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
 
-    this.client.log.debug(`Enqueueing arbitrary input for "${channel.name}" on "${channel.guild.name}"`);
+    this.client.log.debug('Enqueueing arbitrary input.', { arbitraryInput, channel, options });
     this.queue.push(
       channel.guild.id,
       new QueuedItem(
@@ -103,13 +106,13 @@ export default class VoiceManager {
   public enqueueFile(channel: VoiceChannel, file: string, options: Partial<PlayOptions>) {
     const inferredOptions = { ...defaultPlayOptions, ...options };
 
-    this.client.log.debug(`Enqueueing file for ${channel.name} on ${channel.guild.name}`);
+    this.client.log.debug('Enqueueing file.', { channel, file, options });
     this.queue.push(
       channel.guild.id,
       new QueuedItem(channel, (connection: VoiceConnection) => {
         const dispatcher = connection.playFile(file);
 
-        this.client.log.debug(`Playing enqueued file "${file}" for "${channel.name}" on "${channel.guild.name}".`);
+        this.client.log.debug('Playing enqueued file.', { channel, file });
         // FIXME: this should be the caller's problem
         if (options.removeFile) {
           const unlinkCallback = () => (
@@ -139,17 +142,26 @@ export default class VoiceManager {
 
       const { channel, func } = streams[0];
 
-      this.client.log.debug(`Playing queued stream for "${channel.name}" on "${channel.guild.name}".`);
-      this.client.log.debug(`${streams.length} stream(s) are queued for guild "${channel.guild.name}".`);
+      this.client.log.debug(
+        `Evaluating queued stream.`, {
+          channel,
+          streamsForGuild: streams.length,
+          voiceQueue: this.queue,
+        },
+      );
       const matches = this.dispatchers.filter(d => d.player.voiceConnection.channel.guild === channel.guild);
       if (matches.length) {
-        this.client.log.debug(`Aforementioned stream remains queued as ${matches.length} dispatchers are playing.`);
         return;
       }
 
-      this.client.log.debug('Playing aforementioned stream, popped off queue.');
       this.play(channel, func);
       streams.shift();
+
+      this.client.log.debug('Stream played and removed from queue.', {
+        channel,
+        streamsForGuild: streams.length,
+        voiceQueue: this.queue,
+      });
     });
   }
 
@@ -157,24 +169,20 @@ export default class VoiceManager {
     this.dispatchers.push(dispatcher);
     const conn = dispatcher.player.voiceConnection;
 
-    this.client.log.debug(`New dispatcher for "${conn.channel.name}" on "${conn.channel.guild.name}" created.`);
+    this.client.log.debug(`New dispatcher created.`, { dispatcher });
 
     dispatcher.on('finish', () => {
-      this.client.log.debug(
-        `Finished playing dispatcher on "${conn.channel.name}" on guild "${conn.channel.guild.name}".`,
-      );
+      this.client.log.debug(`Finished playing dispatcher.`, { dispatcher });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
     });
 
     dispatcher.on('end', () => {
-      this.client.log.debug(`Dispatcher on "${conn.channel.name}" on guild "${conn.channel.guild.name}" ended.`);
+      this.client.log.debug(`Dispatcher ended.`, { dispatcher });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
     });
 
     dispatcher.on('error', (error: Error) => {
-      this.client.log.debug(
-        `Dispatcher on "${conn.channel.name}" on guild "${conn.channel.guild.name}" errored: ${error}.`,
-      );
+      this.client.log.debug(`Dispatcher errored.`, { dispatcher, error });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
     });
   }

@@ -17,12 +17,14 @@ export default class ParsedMessage {
   public guild: Guild;
   public member: GuildMember;
   public reply: (message: string) => void;
+  public content: string;
 
   constructor(public wrappedMessage: DiscordMessage) {
     this.channel = wrappedMessage.channel;
     this.guild = wrappedMessage.guild;
     this.reply = wrappedMessage.reply;
     this.member = wrappedMessage.member;
+    this.content = wrappedMessage.content;
 
     this.process();
   }

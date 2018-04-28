@@ -1,9 +1,12 @@
 // Maps values to a queue or an array of items.
 export default class MapToArray<T, S> {
   private data: Map<T, S[]>;
+  // Cached as it's called frequently.
+  private totalSize: number;
 
   constructor() {
     this.data = new Map<T, S[]>();
+    this.totalSize = 0;
   }
 
   public push(key: T, value: S, limit: number = -1) {
@@ -17,6 +20,8 @@ export default class MapToArray<T, S> {
       }
       queue.push(value);
     }
+
+    this.totalSize += 1;
   }
 
   // Throws if value or key not present
@@ -32,6 +37,7 @@ export default class MapToArray<T, S> {
       throw Error(`Value "${value}" not present on Map at ${key}.`);
     }
 
+    this.totalSize -= 1;
     array.splice(idx, 1);
   }
 
@@ -41,6 +47,7 @@ export default class MapToArray<T, S> {
       throw Error(`Key "${key}" is not present on Map.`);
     }
 
+    this.totalSize -= 1;
     this.data.delete(key);
   }
 
@@ -60,6 +67,7 @@ export default class MapToArray<T, S> {
       throw Error(`Key "${key}" is not present on Map.`);
     }
 
+    this.totalSize -= 1;
     return this.data.get(key).pop();
   }
 
@@ -70,11 +78,22 @@ export default class MapToArray<T, S> {
       throw Error(`Key "${key}" is not present on Map.`);
     }
 
+    this.totalSize -= 1;
     return this.data.get(key).shift();
   }
 
   public forEach(iterator: (queue: S[]) => any) {
     return this.data.forEach(iterator);
+  }
+
+  public reduce<U>(reducer: (acc: U[], e: [T, S[]]) => U[], initial: U[] = []): U[] {
+    let acc: U[] = initial;
+
+    this.data.forEach((v: S[], k: T) => {
+      acc = reducer(acc, [k, v]);
+    });
+
+    return acc;
   }
 
   public has(key: T): boolean {
@@ -83,5 +102,9 @@ export default class MapToArray<T, S> {
 
   public get length(): number {
     return this.data.size;
+  }
+
+  public get totalLength(): number {
+    return this.totalSize;
   }
 }
