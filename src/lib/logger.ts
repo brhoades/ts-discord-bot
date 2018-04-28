@@ -1,4 +1,10 @@
-import { Logger as WLogger, LoggerInstance as WLoggerInstance, NPMLoggingLevel, transports } from 'winston';
+import {
+  config as WConfig,
+  Logger as WLogger,
+  LoggerInstance as WLoggerInstance,
+  NPMLoggingLevel,
+  transports,
+} from 'winston';
 
 import Client from './client';
 
@@ -30,7 +36,19 @@ export default class Logger {
 
         this.winston = new WLogger({
           transports: [
-            new transports.Console({ level: config.consoleLevel }),
+            new transports.Console({
+              formatter: (options) => {
+                return (
+                  options.timestamp()
+                  + '\t'
+                  + WConfig.colorize(options.level, `[${options.level.toUpperCase()}]`)
+                  + '\t'
+                  + options.message ? options.message : ''
+                  + options.meta ? `\n${JSON.stringify(options.meta)}` : ''
+                );
+              },
+              level: config.consoleLevel,
+            }),
             new transports.File({ filename: config.destinationFile, level: config.fileLevel }),
           ],
         });

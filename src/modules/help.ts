@@ -1,7 +1,7 @@
 import { Message } from 'discord.js';
 
 import Client from '../lib/client';
-import { Help, HelpCommand } from '../types/command';
+import { Help, HelpCommand, Module } from '../types/module';
 
 export const name = 'Help';
 export const help: Help = {
@@ -17,11 +17,13 @@ export const help: Help = {
 
 export const register = (client: Client) => {
   client.onCommand('help', (message) => {
-    const commands = client.commands
-                           .reduce((acc, com) => [...acc, ...com.help.commands], []);
+    const modules = client.modules
+                          .reduce((acc: HelpCommand[], com: Module) => (
+                            [...acc, ...com.help.commands]
+                          ), []);
     if (message.args.length > 0) {
       const commandRegex = new RegExp(`!?${message.args[0]}`);
-      const match = commands.find((c: HelpCommand) => commandRegex.test(c.invocation));
+      const match = modules.find((c: HelpCommand) => commandRegex.test(c.invocation));
 
       if (match) {
         message.channel.send(`Help for: ${match.invocation}\n${match.description}`);
@@ -29,7 +31,7 @@ export const register = (client: Client) => {
         message.channel.send(`Unknown command ${message.args[0]}.`);
       }
     } else {
-      message.channel.send(commands.map(c => ` ${c.invocation}: ${c.shortDescription}`).join('\n'));
+      message.channel.send(modules.map(c => ` ${c.invocation}: ${c.shortDescription}`).join('\n'));
     }
   });
 };

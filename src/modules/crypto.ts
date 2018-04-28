@@ -4,7 +4,7 @@ import { RestClient } from 'typed-rest-client/RestClient';
 const rest = new RestClient('discord-bot');
 
 import Client from '../lib/client';
-import { Help } from '../types/command';
+import { Help } from '../types/module';
 
 interface CryptoCoin {
   id: string;

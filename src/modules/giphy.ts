@@ -1,7 +1,7 @@
 import { RestClient } from 'typed-rest-client/RestClient';
 
 import Client from '../lib/client';
-import { Help } from '../types/command';
+import { Help } from '../types/module';
 
 const rest = new RestClient('discord-bot');
 

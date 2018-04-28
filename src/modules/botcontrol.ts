@@ -1,7 +1,7 @@
 import { Message } from 'discord.js';
 
 import Client from '../lib/client';
-import { Help, HelpCommand } from '../types/command';
+import { Help, HelpCommand } from '../types/module';
 
 export const name = 'Bot Control';
 export const help: Help = {
