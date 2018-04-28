@@ -112,9 +112,6 @@ const playTTSMessage = (manager: VoiceManager, message: string, channel: VoiceCh
 export const register = (client: Client) => {
   const manager = new VoiceManager(client);
 
-  // set up queue proceessing
-  setInterval(() => { manager.processQueue(); }, 500);
-
   client.onCommand('play', (message) => {
     if (message.args.length > 0) {
       const url = message.args[0];

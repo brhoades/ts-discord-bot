@@ -70,6 +70,7 @@ export default class VoiceManager {
 
     matches.map(m => m.end());
 
+    this.processQueue();
     return true;
   }
 
@@ -85,6 +86,8 @@ export default class VoiceManager {
       channel.guild.id, new QueuedItem(channel, (conn) => conn.playStream(stream, { volume: inferredOptions.volume })),
       inferredOptions.limit,
     );
+
+    this.processQueue();
   }
 
   public enqueueArbitraryInput(channel: VoiceChannel, arbitraryInput: string, options: Partial<PlayOptions>) {
@@ -101,6 +104,8 @@ export default class VoiceManager {
       ),
       inferredOptions.limit,
     );
+
+    this.processQueue();
   }
 
   public enqueueFile(channel: VoiceChannel, file: string, options: Partial<PlayOptions>) {
@@ -132,6 +137,8 @@ export default class VoiceManager {
       }),
       inferredOptions.limit,
     );
+
+    this.processQueue();
   }
 
   public processQueue() {
@@ -174,16 +181,19 @@ export default class VoiceManager {
     dispatcher.on('finish', () => {
       this.client.log.debug(`Finished playing dispatcher.`, { dispatcher });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
+      this.processQueue();
     });
 
     dispatcher.on('end', () => {
       this.client.log.debug(`Dispatcher ended.`, { dispatcher });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
+      this.processQueue();
     });
 
     dispatcher.on('error', (error: Error) => {
       this.client.log.debug(`Dispatcher errored.`, { dispatcher, error });
       this.dispatchers.splice(this.dispatchers.indexOf(dispatcher), 1);
+      this.processQueue();
     });
   }
 }

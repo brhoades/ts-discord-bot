@@ -113,14 +113,14 @@ export default class Logger {
     const ret: any = {};
 
     Object.keys(meta).forEach(k => {
-      if (k === 'guild') {
+      if (k === 'guild' && meta[k]) {
         ret[k] = {
           name: meta[k].name,
         };
-      } else if (k === 'channel') {
+      } else if (k === 'channel' && meta[k]) {
         ret[k] = {
-          guild: {
-            name: meta[k].guild && meta[k].guild.name,
+          guild: meta[k].guild && {
+            name: meta[k].guild,
           },
           name: meta[k].name,
           speakable: meta[k].speakable,
