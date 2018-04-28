@@ -38,7 +38,14 @@ export default class Client extends DiscordClient {
 
             if (stats.isDirectory()) {
               const indexRequirePath = join(modulePath, 'index');
-              const indexPath = join(modulePath, 'index.ts');
+              let indexPath = join(modulePath, 'index');
+
+              if (process.env.NODE_ENV === 'development') {
+                indexPath += '.ts';
+              } else {
+                indexPath += '.js';
+              }
+
               stat(indexPath, (indexStatsErr, indexStats) => {
                 if (indexStatsErr) {
                   return reject(indexStatsErr);

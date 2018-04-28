@@ -7,7 +7,7 @@
   "license": "AGPL3+",
   "scripts": {
     "build": "tsc -p .",
-    "dev": "nodemon -e ts"
+    "dev": "NODE_ENV=development nodemon -e ts"
   },
   "devDependencies": {
     "@types/node": "^9.6.0",
