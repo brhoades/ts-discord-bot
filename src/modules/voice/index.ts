@@ -17,9 +17,10 @@ export const help: Help = {
   commands: [
     {
       description: ('Plays a YouTube video or an arbitrary URL which provides audio data into '
-                    + 'the channel you are in.'),
-      invocation: '**!play** [url]',
-      invocationTest: new RegExp(`^!play\s+.+$`),
+                  + 'the channel you are in. If a volume is specified the audio will be played '
+                  + 'at that volume level.'),
+      invocation: '**!play** [url] (*volume*)',
+      invocationTest: new RegExp(`^!play\s+.+?\s[0-9.]*$`),
       shortDescription: 'play a YouTube video or other audio into a voice channel.',
     },
     {
@@ -35,6 +36,13 @@ export const help: Help = {
       invocation: '**!say** *(-lang languageabbrevation)* [message]',
       invocationTest: new RegExp(`^!say (-lang [A-Z]{2,4})? .+$`),
       shortDescription: 'makes the bot stop playing something in your channel.',
+    },
+    {
+      description: ('Sets the volume for the stream playing in your channel to the passed value'
+                    + ' in the range 0 to 1. For example, passing 0.25 will set the volume to 25%'),
+      invocation: '**!volume** [volume level]',
+      invocationTest: new RegExp(`^!volume [0-9.]+$`),
+      shortDescription: 'sets the volume for anything playing in your voice channel.',
     },
   ],
 };
@@ -117,7 +125,9 @@ export const register = (client: Client) => {
       const url = message.args[0];
       let volume = parseFloat(message.args.length > 1 ? message.args[1] : '1');
 
-      if (volume > 1) {
+      if (volume > 1 && volume <= 100) {
+        volume = volume / 100.0;
+      } else if (volume > 100) {
         volume = 1;
       } else if (volume <= 0) {
         return;
@@ -197,6 +207,38 @@ export const register = (client: Client) => {
       language,
       removeFile: true,
     });
+  });
+
+  client.onCommand('volume', (message) => {
+    if (!message.member.voiceChannel) {
+      message.reply('You must be in a voice channel in order to use this command.');
+      return;
+    }
+
+    if (message.args.length === 0) {
+      message.reply('You must provide a volume from 0 to 1 as an argument.');
+      return;
+    }
+
+    let volume = parseFloat(message.args[0]);
+
+    if (volume > 1 && volume <= 100) {
+      volume = volume / 100.0;
+    } else if (volume > 100) {
+      volume = 1;
+    } else if (volume <= 0) {
+      return;
+    }
+
+    const dispatchers = manager.getDispatchersForChannel(message.member.voiceChannel);
+
+    if (dispatchers.length === 0) {
+      message.reply('I\'m not playing anything in your channel.');
+      return;
+    }
+
+    dispatchers[0].setVolume(volume);
+    message.reply(`Set volume to ${volume}.`);
   });
 
   client.on('voiceStateUpdate', (oldMember: GuildMember, newMember: GuildMember) => {

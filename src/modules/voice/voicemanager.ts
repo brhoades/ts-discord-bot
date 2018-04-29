@@ -172,6 +172,10 @@ export default class VoiceManager {
     });
   }
 
+  public getDispatchersForChannel(channel: VoiceChannel): StreamDispatcher[] {
+    return this.dispatchers.filter(d => d.player.voiceConnection.channel === channel);
+  }
+
   private handleDispatchers(dispatcher: StreamDispatcher) {
     this.dispatchers.push(dispatcher);
     const conn = dispatcher.player.voiceConnection;
